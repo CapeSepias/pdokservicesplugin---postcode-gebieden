@@ -5,9 +5,20 @@ from qgis.core import Qgis, QgsMessageLog, QgsLocatorFilter, QgsLocatorResult,  
 
 from . networkaccessmanager import NetworkAccessManager, RequestsException
 
+from .. locatieserver import free_query, suggest_query, lookup_object, Projection
+
 from qgis.PyQt.QtCore import pyqtSignal
 
 import json
+
+# result_free = free_query("Varkensstraat 44-1, 6811GN Arnhem", Projection.EPSG_4326)
+# print(result_free)
+#
+# result_free = suggest_query('2022zj 23')
+# print(result_free)
+#
+# result_free = lookup_object('adr-935f5f299afce6c9334d461e4dd8a910', Projection.EPSG_4326)
+# print(result_free)
 
 # SEE: https://github.com/qgis/QGIS/blob/master/src/core/locator/qgslocatorfilter.h
 #      for all attributes/members/functions to be implemented
@@ -52,20 +63,24 @@ class PDOKLocatieserverLocatorFilter(QgsLocatorFilter):
         if len(search) < 2:
             return
 
-        url = '{}{}'.format(self.SEARCH_URL, search)
+        url = '{}{}'.format(self.SEARCH_URL, search)  # suggest
         self.info('Search url {}'.format(url))
         nam = NetworkAccessManager()
         try:
             # "Provide a valid HTTP Referer or User-Agent identifying the application (QGIS geocoder)"
             headers = {b'User-Agent': self.USER_AGENT}
             # use BLOCKING request, as fetchResults already has it's own thread!
-            (response, content) = nam.request(url, headers=headers, blocking=True)
+            #(response, content) = nam.request(url, headers=headers, blocking=True)
             #self.info(response)
             #self.info(response.status_code)
-            if response.status_code == 200:  # other codes are handled by NetworkAccessManager
-                content_string = content.decode('utf-8')
-                obj = json.loads(content_string)
-                docs = obj['response']['docs']
+            #if response.status_code == 200:  # other codes are handled by NetworkAccessManager
+            content = suggest_query(search)
+            #print(f'########################\n{content}\n########################')
+            if True:  # TODO make locatieserver/http_client also return a status_code (and/or throw exceptions?)
+                #content_string = content.decode('utf-8')
+                #obj = json.loads(content_string)
+                #docs = obj['response']['docs']
+                docs = content
                 for doc in docs:
                     result = QgsLocatorResult()
                     result.filter = self
@@ -88,23 +103,28 @@ class PDOKLocatieserverLocatorFilter(QgsLocatorFilter):
         self.info("UserClick: {}".format(result.displayString))
         # PDOK Location server return id's which have to picked up then
         id = result.userData['id']
-        url = 'https://geodata.nationaalgeoregister.nl/locatieserver/v3/lookup?id={}'.format(id)
-        nam = NetworkAccessManager()
+        # url = 'https://geodata.nationaalgeoregister.nl/locatieserver/v3/lookup?id={}'.format(id)
+        # nam = NetworkAccessManager()
         try:
-            (response, content) = nam.request(url)
-            #print('response: {}'.format(response))
-            # TODO: check statuscode etc
-            #print('content: {}'.format(content))
-            content_string = content.decode('utf-8')
-            obj = json.loads(content_string)
+            # (response, content) = nam.request(url)
+            # #print('response: {}'.format(response))
+            # # TODO: check statuscode etc
+            # #print('content: {}'.format(content))
+            # content_string = content.decode('utf-8')
+            # obj = json.loads(content_string)
+            response = lookup_object(id, Projection.EPSG_4326)
+            #print(f'########################\n{response}\n########################')
 
-            found = obj['response']['numFound']
-            if found != 1:
-                print('XXXXXXXXXXXXXXXXX  numFound != 1')
-            else:
-                doc = obj['response']['docs'][0]
+            # found = obj['response']['numFound']
+            # if found != 1:
+            #     print('XXXXXXXXXXXXXXXXX  numFound != 1')
+            # else:
+            #     doc = obj['response']['docs'][0]
+            if response is not None:  # TODO clean up
+                doc = response
                 point = QgsPoint()
-                point.fromWkt(doc['centroide_ll'])
+                #point.fromWkt(doc['centroide_ll'])
+                point.fromWkt(doc['wkt_geom'])
                 point_xy = QgsPointXY(point)
                 dest_crs = QgsProject.instance().crs()
                 results_crs = QgsCoordinateReferenceSystem(4326, QgsCoordinateReferenceSystem.PostgisCrsId)
