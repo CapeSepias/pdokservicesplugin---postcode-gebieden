@@ -82,8 +82,12 @@ def get_service_url(result):
         service_url = uris[0]["url"]
         service_url = service_url.split("?")[0]
         service_str = result["protocol"].split(":")[1]
-        if "https://geodata.nationaalgeoregister.nl/tiles/service/wmts" in service_url:
+        if "https://geodata.nationaalgeoregister.nl/tiles/service/wmts" in service_url: # shorten paths, some wmts services have redundant path elements in service_url
             service_url = "https://geodata.nationaalgeoregister.nl/tiles/service/wmts"
+
+        if service_url.endswith("/WMTSCapabilities.xml"): # handle cases for restful wmts url, assume kvp variant is supported
+            service_url = service_url.replace("/WMTSCapabilities.xml", "")
+            
         service_url = f"{service_url}?request=GetCapabilities&service={service_str}"
     else:
         error_message = (
