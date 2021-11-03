@@ -19,7 +19,7 @@ source bin/activate
 deactivate
 ```
 
-Install python module dependencies from `requirements.txt` 
+Install python module dependencies from `requirements.txt`
 
 ```
 pip install -r requirements.txt
@@ -34,7 +34,7 @@ and run:
 Example to create a valid/full pdok.json usable ik (old) psokservicesplugin:
 
 ```
-# -n 250 tries to retrieve 250 services of every protocol (WMS,WFS etc) 
+# -n 250 tries to retrieve 250 services of every protocol (WMS,WFS etc)
 # that is for now enough (WMS is max 164 currently)
 # pdok.json is the default name of the json file used in the psokservicesplugin
 ./spider.py -n 250 pdok.json
@@ -89,12 +89,33 @@ services: {[
 }
 ```
 
-TODO
+# Sort services
+
+Script reads the spider.py output json file and writes a new one which is sorted for use in the plugin. Currently (2021) it only puts all WMTS layers at the top.
+
+Create a new json file:
+```
+./sort_services.py pdok.json pdok_sorted.json
+```
+
+Overwrite the existing json file:
+```
+./sort_services.py pdok.json pdok.json
+```
+
+Quit after a number of services (=layers!):
+```
+./sort_services.py pdok.json pdok_sorted.json -n 100
+```
+
+The output needs to be copied manually to the `pdokservicesplugin` directory and should be named `pdok.json`.
+
+
+# TODO
 ----
 
 - make output smaller: remove redundant keys from json
 - make output easier to view in editor by making it possible to output one service on one line (also compact)
-- make it possible to do some kind of sorting (so the most used WMTS layers are on top)
 - pdokservices plugin: actually USE the Metadata-id by creating an url for it
 - add styles to layers
 - make sure crs's work
