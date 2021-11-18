@@ -53,5 +53,6 @@ tracker=https://github.com/rduivenvoorde/pdokservicesplugin/issues
 homepage=https://github.com/rduivenvoorde/pdokservicesplugin
 repository=https://github.com/rduivenvoorde/pdokservicesplugin
 
+hasProcessingProvider=yes
 experimental=False
 icon=img/icon_pdok.svg

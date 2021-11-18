@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os.path
 import uuid
 import re
 import struct
@@ -31,7 +32,7 @@ from qgis.core import (
     QgsProcessingParameterFeatureSink,
 )
 
-from pdok_services.http_client import (
+from ..http_client import (
     get_request_bytes,
 )
 
@@ -123,11 +124,11 @@ class PDOKWCSTool(QgsProcessingAlgorithm):
         return "pdok-ahn3"
 
     def icon(self):
-        """Should return a QIcon which is used for your provider inside
-        the Processing toolbox.
-        """
-        icon_path = ":/plugins/pdok_services/icon.png"
-        icon = QtGui.QIcon(icon_path)
+        provider_path = os.path.dirname(__file__)
+        plugin_path = os.path.dirname(provider_path)
+        img_path = os.path.join(plugin_path, 'img', 'icon_pdok.svg')
+
+        icon = QtGui.QIcon(img_path)
         return icon
 
     def shortHelpString(self):

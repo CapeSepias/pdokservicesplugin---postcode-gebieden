@@ -5,8 +5,11 @@ import os
 from qgis.PyQt.QtWidgets import QAction, QMessageBox
 from qgis.PyQt.QtGui import QIcon
 
+from qgis.core import QgsApplication
+
 from .locator_filter.pdoklocatieserverfilter import PDOKLocatieserverLocatorFilter
 from .pdok_services_dialog import PdokServicesDialog
+from .processing_provider.provider import Provider
 
 
 
@@ -24,6 +27,8 @@ class PdokServicesPlugin:
         self.filter = PDOKLocatieserverLocatorFilter(self.iface)
         self.iface.registerLocatorFilter(self.filter)
 
+        self.provider = None
+
 
     def initGui(self):
         add_service_icon = QIcon(os.path.join(self.plugin_dir, 'img', 'icon_add_service.svg'))
@@ -33,15 +38,21 @@ class PdokServicesPlugin:
         self.toolbar = self.iface.addToolBar("PDOK Services Plugin")
         self.toolbar.addAction(self.add_service_action)
 
+        self.provider = Provider()
+        QgsApplication.processingRegistry().addProvider(self.provider)
+
 
     def unload(self):
+        self.iface.deregisterLocatorFilter(self.filter)
+        QgsApplication.processingRegistry().removeProvider(self.provider)
+
         self.add_service_action.triggered.disconnect(self.show_add_service_dlg)
         self.toolbar.removeAction(self.add_service_action)
         del self.add_service_action
 
         del self.toolbar
 
-        self.iface.deregisterLocatorFilter(self.filter)
+
 
 
     def show_add_service_dlg(self):

@@ -5,7 +5,12 @@ Locatieserver. Tested with QGIS version 3.16, but will probably work with any \
 3.X version."""
 
 import traceback
-from qgis.PyQt.QtCore import QCoreApplication, QVariant
+import re
+import os.path
+
+from PyQt5 import QtGui
+from PyQt5.QtCore import QCoreApplication, QVariant
+
 from qgis.core import (
     QgsProject,
     QgsProcessing,
@@ -28,10 +33,8 @@ from qgis.core import (
     QgsProcessingParameterFeatureSink,
     QgsProcessingParameterField,
 )
-from PyQt5 import QtGui
-import re
 
-from pdok_services.locatieserver import (
+from ..locatieserver import (
     LsType,
     TypeFilter,
     Projection,
@@ -82,11 +85,11 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
         return "pdok-locatie-server"
 
     def icon(self):
-        """Should return a QIcon which is used for your provider inside
-        the Processing toolbox.
-        """
-        icon_path = ":/plugins/pdok_services/icon.png"
-        icon = QtGui.QIcon(icon_path)
+        provider_path = os.path.dirname(__file__)
+        plugin_path = os.path.dirname(provider_path)
+        img_path = os.path.join(plugin_path, 'img', 'icon_pdok.svg')
+
+        icon = QtGui.QIcon(img_path)
         return icon
 
     def shortHelpString(self):
