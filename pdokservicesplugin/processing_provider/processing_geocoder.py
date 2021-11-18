@@ -114,6 +114,8 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             <li><b>Score treshold [optional]:</b> objects returned by the PDOK-LS geocoder each have a score, \
             to indicate how well they match with the query. Results with a score lower than the treshold \
             are excluded</li>\
+            <li><b>Add dummy geometry:</b> Add features with a dummy geometry (near 0,0) for not found locations, instead of leaving these features out from the result. This \
+            can be handy for manually moving these features afterwards.</li>\
             <li><b>Output layer:</b> resulting output layer</li></ul>'
         )
 
@@ -134,6 +136,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
         self.OUTPUT = "OUTPUT"  # recommended name for the main output parameter
         self.ADD_DISPLAY_NAME = "ADD_DISPLAY_NAME"
         self.GET_ACTUAL_GEOM = "GET_ACTUAL_GEOM"
+        self.ADD_DUMMY_GEOMETRY = "ADD_DUMMY_GEOMETRY"
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -187,6 +190,13 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             )
         )
         self.addParameter(
+            QgsProcessingParameterBoolean(
+                self.ADD_DUMMY_GEOMETRY,
+                self.tr('Add dummy geometry (near 0,0) for not found locations'),
+                True,
+            )
+        )
+        self.addParameter(
             QgsProcessingParameterNumber(
                 self.SCORE_TRESHOLD,
                 self.tr("Score treshold"),
@@ -230,6 +240,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             add_display_name = parameters[self.ADD_DISPLAY_NAME]
             src_field = parameters[self.SRC_FIELD]
             get_actual_geom = parameters[self.GET_ACTUAL_GEOM]
+            add_dummy_geometry = parameters[self.ADD_DUMMY_GEOMETRY]
 
             # start processing
             transform = None
@@ -255,6 +266,9 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
 
             if feedback.isCanceled():
                 return {}
+
+            dummy_x = 0
+            dummy_y = 0
 
             for feature in input_layer.getFeatures():
 
@@ -293,6 +307,10 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
                             get_actual_geom, result_type, data, feedback
                         )
                         display_name = data[0]["weergavenaam"]
+
+                if add_dummy_geometry and geom is None:
+                    geom = QgsGeometry().fromWkt(f'POINT({dummy_x} {dummy_y})')
+                    dummy_y -= 50 # Next location will be 50m north
 
                 if geom:
                     attrs = feature.attributes()
