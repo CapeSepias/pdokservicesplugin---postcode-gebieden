@@ -114,7 +114,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             <li><b>Score treshold [optional]:</b> objects returned by the PDOK-LS geocoder each have a score, \
             to indicate how well they match with the query. Results with a score lower than the treshold \
             are excluded</li>\
-            <li><b>Add dummy geometry:</b> Add features with a dummy geometry (near 0,0) for not found locations, instead of leaving these features out from the result. This \
+            <li><b>Add dummy geometry:</b> add features with a dummy geometry (near 0,0) for not found locations, instead of leaving these features out from the result. This \
             can be handy for manually moving these features afterwards.</li>\
             <li><b>Output layer:</b> resulting output layer</li></ul>'
         )
