@@ -319,8 +319,9 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
 
                 geom = None
                 display_name = ""
-                score = data[0]["score"]
+                score = None
                 if len(data) > 0:
+                    score = data[0]["score"]
                     if score_treshold != None and score <= score_treshold:
                         geom = None
                     else:
