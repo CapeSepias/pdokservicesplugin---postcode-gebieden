@@ -111,11 +111,12 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             <li><b>Retrieve actual geometry (instead of centroid):</b> default value: false, will return higher order geometry type if available (depends on <em>Geocode result type</em>)</li>\
             <li><b>Add x and Y attribute:</b> default value: false, add "gc_x" and "gc_y" attributes to the output layer containing \ the geometry centroid coordinates\
             <li><b>Add "weergavenaam" (display name) attribute: </b>, default value false, add "gc_naam" attribute to the output layer, containing the "weergavenaam" returned by the geocoder</li>\
+            <li><b>Add score attribute:</b> default value: false, add "gc_score" attribute to the output layer containing the matching "score" returned by the geocoder \
+            <li><b>Add dummy geometry:</b> add features with a dummy geometry (near 0,0) for not found locations, instead of leaving these features out from the result. This \
+            can be handy for manually moving these features afterwards.</li>\
             <li><b>Score treshold [optional]:</b> objects returned by the PDOK-LS geocoder each have a score, \
             to indicate how well they match with the query. Results with a score lower than the treshold \
             are excluded</li>\
-            <li><b>Add dummy geometry:</b> add features with a dummy geometry (near 0,0) for not found locations, instead of leaving these features out from the result. This \
-            can be handy for manually moving these features afterwards.</li>\
             <li><b>Output layer:</b> resulting output layer</li></ul>'
         )
 
@@ -137,6 +138,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
         self.ADD_DISPLAY_NAME = "ADD_DISPLAY_NAME"
         self.GET_ACTUAL_GEOM = "GET_ACTUAL_GEOM"
         self.ADD_DUMMY_GEOMETRY = "ADD_DUMMY_GEOMETRY"
+        self.ADD_SCORE_FIELD = "ADD_SCORE_FIELD"
 
         self.addParameter(
             QgsProcessingParameterFeatureSource(
@@ -191,6 +193,13 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
         )
         self.addParameter(
             QgsProcessingParameterBoolean(
+                self.ADD_SCORE_FIELD,
+                self.tr('Add score attribute'),
+                False,
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterBoolean(
                 self.ADD_DUMMY_GEOMETRY,
                 self.tr('Add dummy geometry (near 0,0) for not found locations'),
                 False,
@@ -240,6 +249,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             score_treshold = parameters[self.SCORE_TRESHOLD]
             add_xy_field = parameters[self.ADD_XY_FIELD]
             add_display_name = parameters[self.ADD_DISPLAY_NAME]
+            add_score_field = parameters[self.ADD_SCORE_FIELD]
             src_field = parameters[self.SRC_FIELD]
             get_actual_geom = parameters[self.GET_ACTUAL_GEOM]
             add_dummy_geometry = parameters[self.ADD_DUMMY_GEOMETRY]
@@ -249,13 +259,19 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             fields = input_layer.fields()
             field_names = [field.name() for field in fields]
 
+            x_att_name = "gc_x"
+            y_att_name = "gc_y"
             if add_xy_field:
-                fields.append(QgsField("gc_x", QVariant.Double))
-                fields.append(QgsField("gc_y", QVariant.Double))
+                fields.append(QgsField(x_att_name, QVariant.Double))
+                fields.append(QgsField(y_att_name, QVariant.Double))
 
             display_name_att_name = "gc_naam"
             if add_display_name:
                 fields.append(QgsField(display_name_att_name, QVariant.String))
+
+            score_att_name = "gc_score"
+            if add_score_field:
+                fields.append(QgsField(score_att_name, QVariant.Double))
 
             (sink, dest_id) = self.parameterAsSink(
                 parameters,
@@ -303,8 +319,9 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
 
                 geom = None
                 display_name = ""
+                score = data[0]["score"]
                 if len(data) > 0:
-                    if score_treshold != None and data[0]["score"] <= score_treshold:
+                    if score_treshold != None and score <= score_treshold:
                         geom = None
                     else:
                         geom = self.get_geom(
@@ -338,11 +355,14 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
                         pxy = QgsPointXY(point_geom)
                         x = pxy.x()
                         y = pxy.y()
-                        new_ft.setAttribute("gc_x", x)
-                        new_ft.setAttribute("gc_y", y)
+                        new_ft.setAttribute(x_att_name, x)
+                        new_ft.setAttribute(y_att_name, y)
 
                     if add_display_name:
                         new_ft.setAttribute(display_name_att_name, display_name)
+
+                    if add_score_field:
+                        new_ft.setAttribute(score_att_name, score)
 
                     new_ft.setGeometry(geom)
                     sink.addFeature(new_ft, QgsFeatureSink.FastInsert)
