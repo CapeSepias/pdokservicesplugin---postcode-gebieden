@@ -109,8 +109,8 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             <li><b>Geocode result type</b></li>\
             <li><b>Target CRS:</b> CRS of the resulting output layer</li>\
             <li><b>Retrieve actual geometry (instead of centroid):</b> default value: false, will return higher order geometry type if available (depends on <em>Geocode result type</em>)</li>\
-            <li><b>Add x and Y attribute:</b> default value: false, add "x" and "y" attributes to the output layer containing \ the geometry centroid coordinates\
-            <li><b>Add "weergavenaam" (display name) attribute: </b>, default value false, add "weergavenaam" attribute to the output layer</li>\
+            <li><b>Add x and Y attribute:</b> default value: false, add "gc_x" and "gc_y" attributes to the output layer containing \ the geometry centroid coordinates\
+            <li><b>Add "weergavenaam" (display name) attribute: </b>, default value false, add "gc_naam" attribute to the output layer, containing the "weergavenaam" returned by the geocoder</li>\
             <li><b>Score treshold [optional]:</b> objects returned by the PDOK-LS geocoder each have a score, \
             to indicate how well they match with the query. Results with a score lower than the treshold \
             are excluded</li>\
@@ -179,7 +179,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
         )
         self.addParameter(
             QgsProcessingParameterBoolean(
-                self.ADD_XY_FIELD, self.tr("Add x and Y attribute"), False
+                self.ADD_XY_FIELD, self.tr("Add x and y attribute"), False
             )
         )
         self.addParameter(
@@ -193,7 +193,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             QgsProcessingParameterBoolean(
                 self.ADD_DUMMY_GEOMETRY,
                 self.tr('Add dummy geometry (near 0,0) for not found locations'),
-                True,
+                False,
             )
         )
         self.addParameter(
@@ -226,9 +226,11 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             return QgsGeometry.fromWkt(wkt_geom)
 
     def processAlgorithm(self, parameters, context, feedback):
+        feedback.setProgress(0)
         try:
             # read out parameters
-            input_layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
+            input_layer = self.parameterAsSource(parameters, self.INPUT, context)
+            feedback.pushDebugInfo(str(input_layer))
             out_crs = parameters[self.TARGET_CRS]
             result_type_str = [
                 self.predicates[i][0]
@@ -248,10 +250,10 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             field_names = [field.name() for field in fields]
 
             if add_xy_field:
-                fields.append(QgsField("x", QVariant.Double))
-                fields.append(QgsField("y", QVariant.Double))
+                fields.append(QgsField("gc_x", QVariant.Double))
+                fields.append(QgsField("gc_y", QVariant.Double))
 
-            display_name_att_name = "weergavenaam"
+            display_name_att_name = "gc_naam"
             if add_display_name:
                 fields.append(QgsField(display_name_att_name, QVariant.String))
 
@@ -270,8 +272,10 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             dummy_x = 0
             dummy_y = 0
 
-            for feature in input_layer.getFeatures():
+            feature_counter = 0
+            feature_total = input_layer.featureCount()
 
+            for feature in input_layer.getFeatures():
                 # TODO: check if src_field value is None if so skip feature
                 src_field_val = feature.attribute(src_field)
                 if src_field_val is None:
@@ -334,14 +338,17 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
                         pxy = QgsPointXY(point_geom)
                         x = pxy.x()
                         y = pxy.y()
-                        new_ft.setAttribute("x", x)
-                        new_ft.setAttribute("y", y)
+                        new_ft.setAttribute("gc_x", x)
+                        new_ft.setAttribute("gc_y", y)
 
                     if add_display_name:
                         new_ft.setAttribute(display_name_att_name, display_name)
 
                     new_ft.setGeometry(geom)
                     sink.addFeature(new_ft, QgsFeatureSink.FastInsert)
+
+                feature_counter += 1
+                feedback.setProgress((feature_counter/feature_total) * 100)
 
                 if feedback.isCanceled():
                     return {}
