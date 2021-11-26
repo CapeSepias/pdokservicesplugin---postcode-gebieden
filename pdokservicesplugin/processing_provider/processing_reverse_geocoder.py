@@ -105,8 +105,8 @@ class PDOKReverseGeocoder(QgsProcessingAlgorithm):
             <li><b>Fields:</b> fields to add to input point layer from reverse geocoder response, defaults to "weergavenaam" \
             (note that in the resulting output weergavenaam is remapped to "weergavenaam_{result_type}")</li>\
             <li><b>Result type to query</b></li>\
-            <li><b>Score treshold, optional:</b> objects returned by the PDOK-LS geocoder each have a score, \
-            to indicate how well they match the query. Results with a score lower than the treshold \
+            <li><b>Score threshold, optional:</b> objects returned by the PDOK-LS geocoder each have a score, \
+            to indicate how well they match the query. Results with a score lower than the threshold \
             are excluded</li>\
             <li><b>Output point layer:</b> output layer with fields added from the PDOK-LS reverse geocoder \
             response, projection same as input point layer</li></ul>\
@@ -124,7 +124,7 @@ class PDOKReverseGeocoder(QgsProcessingAlgorithm):
         self.INPUT = "INPUT"  # recommended name for the main input parameter
         self.FIELDS = "FIELDS"
         self.RESULT_TYPE = "RESULT_TYPE"
-        self.DISTANCE_TRESHOLD = "DISTANCE_TRESHOLD"
+        self.DISTANCE_THRESHOLD = "DISTANCE_THRESHOLD"
         self.OUTPUT = "OUTPUT"  # recommended name for the main output parameter
 
         self.addParameter(
@@ -157,8 +157,8 @@ class PDOKReverseGeocoder(QgsProcessingAlgorithm):
             )
         )
         dist_param = QgsProcessingParameterDistance(
-            self.DISTANCE_TRESHOLD,
-            self.tr("Score treshold"),
+            self.DISTANCE_THRESHOLD,
+            self.tr("Score threshold"),
             defaultValue=None,
             optional=True,
             minValue=0,
@@ -170,7 +170,7 @@ class PDOKReverseGeocoder(QgsProcessingAlgorithm):
         try:
             # read out algorithm parameters
             input_points = self.parameterAsVectorLayer(parameters, self.INPUT, context)
-            distance_treshold = parameters[self.DISTANCE_TRESHOLD]
+            distance_threshold = parameters[self.DISTANCE_THRESHOLD]
             result_type_str = [
                 self.predicates[i][0]
                 for i in self.parameterAsEnums(parameters, self.RESULT_TYPE, context)
@@ -238,12 +238,12 @@ class PDOKReverseGeocoder(QgsProcessingAlgorithm):
                 result = None
                 if len(data) > 0:
                     if (
-                        distance_treshold != None
-                        and data[0]["afstand"] > distance_treshold
+                        distance_threshold != None
+                        and data[0]["afstand"] > distance_threshold
                     ):
                         distance = data[0]["afstand"]
                         feedback.pushInfo(
-                            f"feature id: {fid} - distance treshold ({distance_treshold}) exceeded: {distance}"
+                            f"feature id: {fid} - distance threshold ({distance_threshold}) exceeded: {distance}"
                         )
                         pass
                     else:

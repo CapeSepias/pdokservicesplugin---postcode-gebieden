@@ -114,8 +114,8 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             <li><b>Add score attribute:</b> default value: false, add "gc_score" attribute to the output layer containing the matching "score" returned by the geocoder \
             <li><b>Add dummy geometry:</b> add features with a dummy geometry (near 0,0) for not found locations, instead of leaving these features out from the result. This \
             can be handy for manually moving these features afterwards.</li>\
-            <li><b>Score treshold [optional]:</b> objects returned by the PDOK-LS geocoder each have a score, \
-            to indicate how well they match with the query. Results with a score lower than the treshold \
+            <li><b>Score threshold [optional]:</b> objects returned by the PDOK-LS geocoder each have a score, \
+            to indicate how well they match with the query. Results with a score lower than the threshold \
             are excluded</li>\
             <li><b>Output layer:</b> resulting output layer</li></ul>'
         )
@@ -133,7 +133,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
         self.ADD_XY_FIELD = "ADD_XY_FIELD"
         self.SRC_FIELD = "SRC_FIELD"
         self.RESULT_TYPE = "RESULT_TYPE"
-        self.SCORE_TRESHOLD = "SCORE_TRESHOLD"
+        self.SCORE_THRESHOLD = "SCORE_THRESHOLD"
         self.OUTPUT = "OUTPUT"  # recommended name for the main output parameter
         self.ADD_DISPLAY_NAME = "ADD_DISPLAY_NAME"
         self.GET_ACTUAL_GEOM = "GET_ACTUAL_GEOM"
@@ -207,8 +207,8 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
         )
         self.addParameter(
             QgsProcessingParameterNumber(
-                self.SCORE_TRESHOLD,
-                self.tr("Score treshold"),
+                self.SCORE_THRESHOLD,
+                self.tr("Score threshold"),
                 type=QgsProcessingParameterNumber.Double,
                 defaultValue=None,
                 optional=True,
@@ -246,7 +246,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
                 for i in self.parameterAsEnums(parameters, self.RESULT_TYPE, context)
             ][0]
             result_type = LsType[result_type_str]
-            score_treshold = parameters[self.SCORE_TRESHOLD]
+            score_threshold = parameters[self.SCORE_THRESHOLD]
             add_xy_field = parameters[self.ADD_XY_FIELD]
             add_display_name = parameters[self.ADD_DISPLAY_NAME]
             add_score_field = parameters[self.ADD_SCORE_FIELD]
@@ -322,7 +322,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
                 score = None
                 if len(data) > 0:
                     score = data[0]["score"]
-                    if score_treshold != None and score <= score_treshold:
+                    if score_threshold != None and score <= score_threshold:
                         geom = None
                     else:
                         geom = self.get_geom(
