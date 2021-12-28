@@ -32,6 +32,7 @@ from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterFeatureSink,
     QgsProcessingParameterField,
+    NULL,
 )
 
 from ..locatieserver import (
@@ -294,6 +295,12 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             for feature in input_layer.getFeatures():
                 # TODO: check if src_field value is None if so skip feature
                 src_field_val = feature.attribute(src_field)
+                #feedback.pushInfo(f"src_field_val: {src_field_val}")
+
+                # Set returned NULL value to None (workaround, cause QGIS does not yet return a None for empty cells)
+                if src_field_val == NULL:
+                    src_field_val = None
+
                 if src_field_val is None:
                     continue
 
