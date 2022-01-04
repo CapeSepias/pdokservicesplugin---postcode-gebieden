@@ -29,36 +29,35 @@ class LayerRegistry():
                 type_strings.append(part.lower())
             else:
                 if len(part) > 1:
-                    text_strings.append(part)
+                    text_strings.append(part.lower())
         #print(text_strings)
         #print(type_strings)
 
-        if len(text_strings) == 0:
+        if len(text_strings) == 0 and len(type_strings) == 0:
             return self.layers
+
+        search_configs = [
+            {'key': 'name', 'multiplier': 1.5},
+            {'key': 'title', 'multiplier': 3},
+            {'key': 'servicetitle', 'multiplier': 2},
+            {'key': 'abstract', 'multiplier': 1},
+        ]
 
         result = []
         for layer in self.layers:
             score = 0
-            #print(layer)
-
-            search_configs = [
-                {'key': 'name', 'multiplier': 1.5},
-                {'key': 'title', 'multiplier': 3},
-                {'key': 'servicetitle', 'multiplier': 2},
-                {'key': 'abstract', 'multiplier': 1},
-            ]
-
-            for search_config in search_configs:
-                source = layer.get(search_config['key'])
-                #print(source)
-                if source is not None:
-                    score += self.find_strings(text_strings, source) * search_config['multiplier']
 
             if len(type_strings) > 0:
                 if layer.get('type', '') not in type_strings:
                     continue
 
-            if score > 5:
+            for search_config in search_configs:
+                source = layer.get(search_config['key'].lower())
+                #print(source)
+                if source is not None:
+                    score += self.find_strings(text_strings, source) * search_config['multiplier']
+
+            if score > 0 or len(text_strings) == 0:
                 layer['score'] = score
                 result.append(layer)
                 result.sort(key=lambda item: -item.get("score"))
