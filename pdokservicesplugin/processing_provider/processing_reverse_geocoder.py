@@ -4,7 +4,7 @@
    Locatieserver. Tested with QGIS version 3.16, but will probably work with any \
    3.X version.
 """
-import sys, traceback
+import traceback
 import os.path
 
 from PyQt5 import QtGui
@@ -31,15 +31,10 @@ from qgis.core import (
     QgsProcessingParameterFeatureSink,
 )
 
-from qgis import processing
-
 from ..locatieserver import (
     LsType,
     reverse_lookup,
     TypeFilter,
-    Projection,
-    lookup_object,
-    free_query,
 )
 
 

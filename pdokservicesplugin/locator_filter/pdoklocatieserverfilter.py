@@ -3,11 +3,9 @@
 from qgis.core import Qgis, QgsMessageLog, QgsLocatorFilter, QgsLocatorResult,  \
     QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsPoint, QgsPointXY
 
-from .. locatieserver import free_query, suggest_query, lookup_object, Projection
+from .. locatieserver import suggest_query, lookup_object, Projection
 
 from qgis.PyQt.QtCore import pyqtSignal
-
-import json
 
 # result_free = free_query("Varkensstraat 44-1, 6811GN Arnhem", Projection.EPSG_4326)
 # print(result_free)
@@ -21,12 +19,6 @@ import json
 # SEE: https://github.com/qgis/QGIS/blob/master/src/core/locator/qgslocatorfilter.h
 #      for all attributes/members/functions to be implemented
 class PDOKLocatieserverLocatorFilter(QgsLocatorFilter):
-
-    USER_AGENT = b'Mozilla/5.0 QGIS PDOKLocatieserverLocatorFilter'
-
-    SEARCH_URL = 'https://geodata.nationaalgeoregister.nl/locatieserver/v3/suggest?q='
-    # test url to be able to force errors
-    #SEARCH_URL = 'http://duif.net/cgi-bin/qlocatorcheck.cgi?q='
 
     # some magic numbers to be able to zoom to more or less defined levels
     ADDRESS = 1000
@@ -61,8 +53,6 @@ class PDOKLocatieserverLocatorFilter(QgsLocatorFilter):
         if len(search) < 2:
             return
 
-        url = '{}{}'.format(self.SEARCH_URL, search)  # suggest
-        self.info('Search url {}'.format(url))
         try:
             content = suggest_query(search)
             #print(f'########################\n{content}\n########################')
@@ -77,6 +67,7 @@ class PDOKLocatieserverLocatorFilter(QgsLocatorFilter):
                     result.displayString = '{} ({})'.format(doc['weergavenaam'], doc['type'])
                     # use the json full item as userData, so all info is in it:
                     result.userData = doc
+                    result.score = doc['score']  # setting a score makes QGIS sort on it in the results!
                     self.resultFetched.emit(result)
 
         except Exception as err:
@@ -94,23 +85,9 @@ class PDOKLocatieserverLocatorFilter(QgsLocatorFilter):
         # PDOK Location server return id's which have to picked up then
         id = result.userData['id']
         # url = 'https://geodata.nationaalgeoregister.nl/locatieserver/v3/lookup?id={}'.format(id)
-        # nam = NetworkAccessManager()
         try:
-            # (response, content) = nam.request(url)
-            # #print('response: {}'.format(response))
-            # # TODO: check statuscode etc
-            # #print('content: {}'.format(content))
-            # content_string = content.decode('utf-8')
-            # obj = json.loads(content_string)
             response = lookup_object(id, Projection.EPSG_4326)
-            #print(f'########################\n{response}\n########################')
-
-            # found = obj['response']['numFound']
-            # if found != 1:
-            #     print('XXXXXXXXXXXXXXXXX  numFound != 1')
-            # else:
-            #     doc = obj['response']['docs'][0]
-            if response is not None:  # TODO clean up
+            if response is not None:
                 doc = response
                 point = QgsPoint()
                 #point.fromWkt(doc['centroide_ll'])
