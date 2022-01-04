@@ -505,7 +505,7 @@ class PdokServicesPlugin(object):
         self.proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self.proxyModel.setFilterFixedString(string)
 
-    #def addSourceRow(self, service, layer):
+    #def add_layer_row(self, service, layer):
     def addSourceRow(self, serviceLayer):
         # you can attache different "data's" to to an QStandarditem
         # default one is the visible one:
