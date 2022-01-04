@@ -101,15 +101,19 @@ class PdokServicesPlugin:
 #        self.table_model.appendRow([item_layer_name, item_type, item_service_title, item_filter])
         self.table_model.appendRow([item_layer_name, item_type, item_service_title])
 
+
     def filter_layers(self, text):
         log.debug(f'Zoek naar: {text}')
+        QgsApplication.setOverrideCursor(Qt.WaitCursor)
         if len(text) == 0:
             layers = self.layer_registry.layers
         elif len(text) == 1:
             layers = []
         else:
             layers = self.layer_registry.query(text)
+        QgsApplication.restoreOverrideCursor()
         self.fill_layer_table(layers)
+
 
     def fill_layer_table(self, layers):
         self.table_model = QStandardItemModel()
