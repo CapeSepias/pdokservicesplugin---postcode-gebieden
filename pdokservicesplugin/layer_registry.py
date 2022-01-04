@@ -28,9 +28,13 @@ class LayerRegistry():
             if part.lower() in ['wms', 'wfs', 'wmts', 'wcs']:
                 type_strings.append(part.lower())
             else:
-                text_strings.append(part)
+                if len(part) > 1:
+                    text_strings.append(part)
         #print(text_strings)
         #print(type_strings)
+
+        if len(text_strings) == 0:
+            return self.layers
 
         result = []
         for layer in self.layers:
@@ -54,7 +58,7 @@ class LayerRegistry():
                 if layer.get('type', '') not in type_strings:
                     continue
 
-            if score > 0:
+            if score > 5:
                 layer['score'] = score
                 result.append(layer)
                 result.sort(key=lambda item: -item.get("score"))
