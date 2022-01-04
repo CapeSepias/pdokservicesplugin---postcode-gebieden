@@ -31,12 +31,13 @@ class PdokServicesPlugin:
 
 
     def initGui(self):
-        add_service_icon = QIcon(os.path.join(self.plugin_dir, 'img', 'icon_add_service.svg'))
-        self.add_service_action = QAction(add_service_icon, 'Voeg PDOK-kaartlaag toe...', self.iface.mainWindow())
-        self.add_service_action.triggered.connect(self.show_add_service_dlg)
+        add_layer_icon = QIcon(os.path.join(self.plugin_dir, 'img', 'icon_add_service.svg'))
+        self.add_layer_action = QAction(add_layer_icon, 'Voeg PDOK-kaartlaag toe...', self.iface.mainWindow())
+        self.add_layer_action.triggered.connect(self.show_add_service_dlg)
 
         self.toolbar = self.iface.addToolBar("PDOK Services Plugin")
-        self.toolbar.addAction(self.add_service_action)
+        self.toolbar.setObjectName("PDOK Services Plugin")  # without this Qt complains" "Qt: QMainWindow::saveState(): 'objectName' not set for QToolBar 0x560b3b88f5a0 'PDOK Services Plugin'"
+        self.toolbar.addAction(self.add_layer_action)
 
         self.provider = Provider()
         QgsApplication.processingRegistry().addProvider(self.provider)
@@ -46,9 +47,9 @@ class PdokServicesPlugin:
         self.iface.deregisterLocatorFilter(self.filter)
         QgsApplication.processingRegistry().removeProvider(self.provider)
 
-        self.add_service_action.triggered.disconnect(self.show_add_service_dlg)
-        self.toolbar.removeAction(self.add_service_action)
-        del self.add_service_action
+        self.add_layer_action.triggered.disconnect(self.show_add_service_dlg)
+        self.toolbar.removeAction(self.add_layer_action)
+        del self.add_layer_action
 
         del self.toolbar
 

@@ -29,7 +29,7 @@ class PdokServicesDialog(QDialog, FORM_CLASS):
         self.geocoderResultView.setSelectionMode(self.geocoderResultView.SingleSelection)
         self.geocoderResultView.setSelectionBehavior(self.geocoderResultView.SelectRows)
 
-        self.tabs = self.tabWidget # TODO: why changing this name??
+        self.tabs = self.tabWidget  # TODO: why changing this name??
 
         # close button
         self.buttonBox.rejected.connect(self.reject)

@@ -3,8 +3,6 @@
 from qgis.core import Qgis, QgsMessageLog, QgsLocatorFilter, QgsLocatorResult,  \
     QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsProject, QgsPoint, QgsPointXY
 
-from . networkaccessmanager import NetworkAccessManager, RequestsException
-
 from .. locatieserver import free_query, suggest_query, lookup_object, Projection
 
 from qgis.PyQt.QtCore import pyqtSignal
@@ -65,15 +63,7 @@ class PDOKLocatieserverLocatorFilter(QgsLocatorFilter):
 
         url = '{}{}'.format(self.SEARCH_URL, search)  # suggest
         self.info('Search url {}'.format(url))
-        nam = NetworkAccessManager()
         try:
-            # "Provide a valid HTTP Referer or User-Agent identifying the application (QGIS geocoder)"
-            headers = {b'User-Agent': self.USER_AGENT}
-            # use BLOCKING request, as fetchResults already has it's own thread!
-            #(response, content) = nam.request(url, headers=headers, blocking=True)
-            #self.info(response)
-            #self.info(response.status_code)
-            #if response.status_code == 200:  # other codes are handled by NetworkAccessManager
             content = suggest_query(search)
             #print(f'########################\n{content}\n########################')
             if True:  # TODO make locatieserver/http_client also return a status_code (and/or throw exceptions?)
@@ -89,7 +79,7 @@ class PDOKLocatieserverLocatorFilter(QgsLocatorFilter):
                     result.userData = doc
                     self.resultFetched.emit(result)
 
-        except RequestsException as err:
+        except Exception as err:
             # Handle exception..
             # only this one seems to work
             self.info(err)
@@ -147,7 +137,7 @@ class PDOKLocatieserverLocatorFilter(QgsLocatorFilter):
                 self.iface.mapCanvas().zoomScale(scale_denominator)
                 self.iface.mapCanvas().refresh()
 
-        except RequestsException as err:
+        except Exception as err:
             # Handle exception..
             # only this one seems to work
             self.info(err)
