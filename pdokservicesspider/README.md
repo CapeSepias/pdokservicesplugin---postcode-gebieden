@@ -91,7 +91,7 @@ services: {[
 
 # Sort services
 
-Script reads the spider.py output json file and writes a new one which is sorted for use in the plugin. Currently (2021) it only puts all WMTS layers at the top.
+Script reads the spider.py output json file and writes a new one which is sorted for use in the plugin. It tries to find some popular layers by name and service type and puts these at the top. After those come all WMTS-services and then the rest.
 
 Create a new json file:
 ```
