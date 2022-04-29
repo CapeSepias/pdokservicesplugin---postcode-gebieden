@@ -1,3 +1,4 @@
 *.pyc
 .idea
 pycharm-debug-py3k.egg
+.vscode
