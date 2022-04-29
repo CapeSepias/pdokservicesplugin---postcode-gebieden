@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=attribute-defined-outside-init
 
 """pdok-reverse-geocoder.py: QGIS Processing tool for reverse geocoding with the PDOK \
    Locatieserver. Tested with QGIS version 3.16, but will probably work with any \
@@ -75,7 +76,7 @@ class PDOKReverseGeocoder(QgsProcessingAlgorithm):
     def icon(self):
         provider_path = os.path.dirname(__file__)
         plugin_path = os.path.dirname(provider_path)
-        img_path = os.path.join(plugin_path, 'img', 'icon_pdok.svg')
+        img_path = os.path.join(plugin_path, "img", "icon_pdok.svg")
 
         icon = QtGui.QIcon(img_path)
         return icon
@@ -221,13 +222,15 @@ class PDOKReverseGeocoder(QgsProcessingAlgorithm):
 
                 point_geom = QgsGeometry.asPoint(geom)
                 pxy = QgsPointXY(point_geom)
-                x = pxy.x()
-                y = pxy.y()
+                x_coord = pxy.x()
+                y_coord = pxy.y()
 
                 # afstand field required, add if not requested by user
                 if "afstand" not in input_fields:
                     input_fields.append("afstand")
-                data = reverse_lookup(x, y, input_fields, TypeFilter([result_type]))
+                data = reverse_lookup(
+                    x_coord, y_coord, input_fields, TypeFilter([result_type])
+                )
                 # TODO: add exception handling reverse_lookup
 
                 result = None
@@ -252,7 +255,7 @@ class PDOKReverseGeocoder(QgsProcessingAlgorithm):
                                 )
                 else:
                     feedback.pushInfo(
-                        f"feature id: {fid} - no objects found for x,y ({x},{y}) with result_type: {result_type.value}"
+                        f"feature id: {fid} - no objects found for x,y ({x_coord},{y_coord}) with result_type: {result_type.value}"
                     )
 
                 attrs = point.attributes()
@@ -275,8 +278,8 @@ class PDOKReverseGeocoder(QgsProcessingAlgorithm):
             results = {}
             results[self.OUTPUT] = dest_id
             return results
-        except Exception as e:
+        except Exception as ex:
             traceback_str = traceback.format_exc()
             raise QgsProcessingException(
-                f"Unexpected error occured while running PDOKReverseGeocoder: {str(e)} - {traceback_str}"
+                f"Unexpected error occured while running PDOKReverseGeocoder: {str(ex)} - {traceback_str}"
             )

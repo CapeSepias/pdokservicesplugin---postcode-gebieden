@@ -10,11 +10,12 @@ from qgis.PyQt.QtWidgets import (
 from qgis.PyQt import uic
 
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'pdok_services_dialog.ui'))
+FORM_CLASS, _ = uic.loadUiType(
+    os.path.join(os.path.dirname(__file__), "pdok_services_dialog.ui")
+)
+
 
 class PdokServicesDialog(QDialog, FORM_CLASS):
-
     def __init__(self, plugin, parent=None):
 
         super(PdokServicesDialog, self).__init__(parent)

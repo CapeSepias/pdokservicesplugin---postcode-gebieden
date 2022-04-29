@@ -86,7 +86,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
     def icon(self):
         provider_path = os.path.dirname(__file__)
         plugin_path = os.path.dirname(provider_path)
-        img_path = os.path.join(plugin_path, 'img', 'icon_pdok.svg')
+        img_path = os.path.join(plugin_path, "img", "icon_pdok.svg")
 
         icon = QtGui.QIcon(img_path)
         return icon
@@ -193,14 +193,14 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.ADD_SCORE_FIELD,
-                self.tr('Add score attribute'),
+                self.tr("Add score attribute"),
                 False,
             )
         )
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.ADD_DUMMY_GEOMETRY,
-                self.tr('Add dummy geometry (near 0,0) for not found locations'),
+                self.tr("Add dummy geometry (near 0,0) for not found locations"),
                 False,
             )
         )
@@ -293,7 +293,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             for feature in input_layer.getFeatures():
                 # TODO: check if src_field value is None if so skip feature
                 src_field_val = feature.attribute(src_field)
-                #feedback.pushInfo(f"src_field_val: {src_field_val}")
+                # feedback.pushInfo(f"src_field_val: {src_field_val}")
 
                 # Set returned NULL value to None (workaround, cause QGIS does not yet return a None for empty cells)
                 if src_field_val == NULL:
@@ -336,8 +336,8 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
                         display_name = data[0]["weergavenaam"]
 
                 if add_dummy_geometry and geom is None:
-                    geom = QgsGeometry().fromWkt(f'POINT({dummy_x} {dummy_y})')
-                    dummy_y -= 50 # Next location will be 50m north
+                    geom = QgsGeometry().fromWkt(f"POINT({dummy_x} {dummy_y})")
+                    dummy_y -= 50  # Next location will be 50m north
 
                 if geom:
                     attrs = feature.attributes()
@@ -374,7 +374,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
                     sink.addFeature(new_ft, QgsFeatureSink.FastInsert)
 
                 feature_counter += 1
-                feedback.setProgress((feature_counter/feature_total) * 100)
+                feedback.setProgress((feature_counter / feature_total) * 100)
 
                 if feedback.isCanceled():
                     return {}

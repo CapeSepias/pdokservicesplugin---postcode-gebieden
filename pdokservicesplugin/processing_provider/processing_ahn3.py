@@ -126,7 +126,7 @@ class PDOKWCSTool(QgsProcessingAlgorithm):
     def icon(self):
         provider_path = os.path.dirname(__file__)
         plugin_path = os.path.dirname(provider_path)
-        img_path = os.path.join(plugin_path, 'img', 'icon_pdok.svg')
+        img_path = os.path.join(plugin_path, "img", "icon_pdok.svg")
 
         icon = QtGui.QIcon(img_path)
         return icon

@@ -5,17 +5,15 @@ The name of logger we use in this plugin.
 It is created in the plugin.py and logs to the QgsMessageLog under the 
 given LOGGER_NAME tab
 """
-LOGGER_NAME = 'PDOK Services Plugin'
+LOGGER_NAME = "PDOK Services Plugin"
 from . import LOGGER_NAME
-from qgis.core import (
-    Qgis
-)
+from qgis.core import Qgis
 
 from .pdokservicesplugin import PdokServicesPlugin
 
 
 class QgisLogHandler(logging.StreamHandler):
-    '''
+    """
     Some magic to make it possible to use code like:
 
     import logging
@@ -24,7 +22,8 @@ class QgisLogHandler(logging.StreamHandler):
 
     in all this plugin code, and it will show up in the QgsMessageLog
 
-    '''
+    """
+
     def __init__(self, topic):
         logging.StreamHandler.__init__(self)
         # topic is used both as logger id and for tab
@@ -36,9 +35,13 @@ class QgisLogHandler(logging.StreamHandler):
         # Without this it will not be shown because it is something like
         # <qgisnetworklogger.plugin.QgisNetworkLogger object at 0x7f580dac6b38>
         # which looks like an html element so is not shown in the html panel
-        msg = msg.replace('<', '&lt;').replace('>', '&gt;')
-        from qgis.core import QgsMessageLog  # we need this... else QgsMessageLog is None after a plugin reload
-        QgsMessageLog.logMessage('{}'.format(msg), self.topic, Qgis.Info)
+        msg = msg.replace("<", "&lt;").replace(">", "&gt;")
+        from qgis.core import (
+            QgsMessageLog,
+        )  # we need this... else QgsMessageLog is None after a plugin reload
+
+        QgsMessageLog.logMessage("{}".format(msg), self.topic, Qgis.Info)
+
 
 log = logging.getLogger(LOGGER_NAME)
 # checking below is needed, else we add this handler every time the plugin
@@ -48,6 +51,7 @@ if not log.hasHandlers():
 
 # set logging level (NOTSET = no, else: DEBUG or INFO)
 log.setLevel(logging.DEBUG)
+
 
 def classFactory(iface):
     return PdokServicesPlugin(iface)

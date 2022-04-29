@@ -1,8 +1,6 @@
 from enum import Enum
 import json
-from qgis.core import (
-    QgsWkbTypes,
-)
+from qgis.core import QgsWkbTypes
 import urllib.parse
 from osgeo import ogr
 

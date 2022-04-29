@@ -1,9 +1,8 @@
 import json
 from qgis.PyQt.QtNetwork import QNetworkReply, QNetworkRequest
 from qgis.PyQt.QtCore import QUrl
-from qgis.core import (
-    QgsBlockingNetworkRequest,
-)
+from qgis.core import QgsBlockingNetworkRequest
+
 
 def get_reply(url):
     qgs_request = QgsBlockingNetworkRequest()
@@ -13,12 +12,12 @@ def get_reply(url):
 
     if err is QgsBlockingNetworkRequest.NoError:
         # TODO: add proper error handling
-        print('QgsBlockingNetworkRequest.NoError')
+        print("QgsBlockingNetworkRequest.NoError")
 
     reply = qgs_request.reply()
     if reply.error() is QNetworkReply.NoError:
         # TODO: add proper error handling
-        print('SERVER ERROR OCCURED')
+        print("SERVER ERROR OCCURED")
     return reply
 
 
