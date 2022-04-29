@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import logging
 import json
-import xml
 import asyncio
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import itertools
+import pprint
+import re
+from cv2 import sort
 import requests
 from copy import deepcopy
 from owslib.csw import CatalogueServiceWeb
@@ -15,14 +17,58 @@ from owslib.wfs import WebFeatureService
 from owslib.wcs import WebCoverageService
 import warnings
 
+
 CSW_URL = "https://nationaalgeoregister.nl/geonetwork/srv/dut/csw"
 LOG_LEVEL = "INFO"
 PROTOCOLS = ["OGC:WMS", "OGC:WFS", "OGC:WMTS", "OGC:WCS"]
+SORTING_RULES = {
+    0: {"names": ["opentopo+"], "types": ["wmts"]},
+    10: {"names": ["^actueel_orthohr$"], "types": ["wmts"]},
+    11: {"names": ["^actueel_ortho25$"], "types": ["wmts"]},
+    12: {"names": ["^actueel_ortho25ir$"], "types": ["wmts"]},
+    13: {"names": ["lufolabels"], "types": ["wmts"]},
+    # 15: {'names': ['^\d{4}_ortho'], 'types': ['wmts']},
+    # 16: {'names': ['^\d{4}_ortho+IR'], 'types': ['wmts']},
+    20: {
+        "names": ["landgebied", "provinciegebied", "gemeentegebied"],
+        "types": ["wfs"],
+    },
+    30: {"names": ["top+"], "types": ["wmts"]},
+    32: {
+        "names": ["^standaard$", "^grijs$", "^pastel$", "^water$"],
+        "types": ["wmts"],
+    },  # BRT-lagen
+    34: {"names": ["bgtstandaardv2", "bgtachtergrond"], "types": ["wmts"]},
+    60: {"names": ["ahn3+"], "types": ["wmts"]},
+    # 90: {'names': ['aan+'], 'types': ['wmts']},
+}
+
 
 logging.basicConfig(
     level=LOG_LEVEL,
     format="%(asctime)s - %(levelname)s: %(message)s",
 )
+
+
+def get_sorting_value(layer_info):
+    if not "name" in layer_info:
+        return 101
+    layer_name = layer_info["name"].lower()
+    for key, sorting_rule in SORTING_RULES.items():
+        if layer_info["type"].lower() in sorting_rule["types"]:
+            for name in sorting_rule["names"]:
+                if re.search(name, layer_name) is not None:
+                    return key
+    if layer_info["type"].lower() == "wmts":
+        return 99  # other wmts layers
+    else:
+        return 100  # all other layers
+
+
+def is_popular(service):
+    if service["type"].lower() == "wmts":
+        return True
+    return False
 
 
 def join_lists_by_property(list_1, list_2, prop_name):
@@ -82,12 +128,16 @@ def get_service_url(result):
         service_url = uris[0]["url"]
         service_url = service_url.split("?")[0]
         service_str = result["protocol"].split(":")[1]
-        if "https://geodata.nationaalgeoregister.nl/tiles/service/wmts" in service_url: # shorten paths, some wmts services have redundant path elements in service_url
+        if (
+            "https://geodata.nationaalgeoregister.nl/tiles/service/wmts" in service_url
+        ):  # shorten paths, some wmts services have redundant path elements in service_url
             service_url = "https://geodata.nationaalgeoregister.nl/tiles/service/wmts"
 
-        if service_url.endswith("/WMTSCapabilities.xml"): # handle cases for restful wmts url, assume kvp variant is supported
+        if service_url.endswith(
+            "/WMTSCapabilities.xml"
+        ):  # handle cases for restful wmts url, assume kvp variant is supported
             service_url = service_url.replace("/WMTSCapabilities.xml", "")
-            
+
         service_url = f"{service_url}?request=GetCapabilities&service={service_str}"
     else:
         error_message = (
@@ -326,7 +376,23 @@ def flatten_service(service):
     return result
 
 
-def main(out_file, number_records, pretty, protocols):
+def sort_service_layers(services):
+    sorted_layer_dict = {}
+    for service in services["services"]:
+        sorting_value = get_sorting_value(service)
+        if sorting_value in sorted_layer_dict:
+            sorted_layer_dict[sorting_value].append(service)
+        else:
+            sorted_layer_dict[sorting_value] = [service]
+    output_dict = {"services": []}
+    for key in sorted(sorted_layer_dict.keys()):
+        if len(sorted_layer_dict[key]) == 0:
+            logging.info(f"no layers found for sorting rule: {SORTING_RULES[key]}")
+        output_dict["services"] += sorted_layer_dict[key]
+    return output_dict
+
+
+def main(out_file, number_records, sort, pretty, protocols):
     if protocols:
         protocols = protocols.split(",")
     else:
@@ -381,12 +447,16 @@ def main(out_file, number_records, pretty, protocols):
     config.extend(wms_layers)
     nr_layers = len(config)
 
+    services = {"services": config}
+    if sort:
+        logging.info(f"sorting services")
+        services = sort_service_layers(services)
+
     with open(out_file, "w") as f:
-        indent = None
         if pretty:
-            indent = 4
-        services = {"services": config}
-        json.dump(services, f, indent=indent)
+            json.dump(services, f, indent=4)
+        else:
+            json.dump(services, f)
 
     logging.info(f"indexed {nr_services} services with {nr_layers} layers")
     if nr_failed_services > 0:
@@ -419,16 +489,25 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--sort",
+        action="store_true",
+        help="sort service layers based on default sorting rules",
+    )
+
+    parser.add_argument(
         "--pretty", dest="pretty", action="store_true", help="pretty JSON output"
     )
     parser.add_argument(
-        "--warnings", dest="show_warnings", action="store_true", help="show user warnings - owslib tends to show warnings about capabilities"
+        "--warnings",
+        dest="show_warnings",
+        action="store_true",
+        help="show user warnings - owslib tends to show warnings about capabilities",
     )
     args = parser.parse_args()
 
     if args.show_warnings:
-        main(args.output_file, args.number, args.pretty, args.protocols)
+        main(args.output_file, args.number, args.sort, args.pretty, args.protocols)
     else:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            main(args.output_file, args.number, args.pretty, args.protocols)
+            main(args.output_file, args.number, args.sort, args.pretty, args.protocols)
