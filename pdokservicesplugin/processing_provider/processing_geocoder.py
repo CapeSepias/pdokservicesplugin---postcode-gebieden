@@ -31,6 +31,7 @@ from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterFeatureSink,
     QgsProcessingParameterField,
+    QgsProcessingParameterExpression,
     NULL,
 )
 
@@ -170,7 +171,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
             )
         )
         self.addParameter(
-            QgsProcessingParameterField(
+            QgsProcessingParameterExpression(
                 self.SRC_FIELD,
                 self.tr("Geocode attribute"),
                 None,
@@ -300,7 +301,7 @@ class PDOKGeocoder(QgsProcessingAlgorithm):
                 self.OUTPUT,
                 context,
                 fields,
-                result_type.geom_type(),
+                result_type.geom_type(), # note: geomtype mapping is not garantueed, polygon geometries are simplified by LS and can collapse to a POINT geometry (or maybe even a LINE geometry). TODO: add warning/error when this condition is encountered
                 out_crs,
             )
 
